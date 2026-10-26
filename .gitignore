@@ -1,0 +1,23 @@
+# STM32CubeIDE build output and generated drivers
+Debug/
+Release/
+Drivers/
+*.o
+*.d
+*.su
+*.elf
+*.map
+*.list
+*.launch
+
+# AVR Studio
+*.hex
+*.obj
+*.eep
+*.aws
+labels.tmp
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini

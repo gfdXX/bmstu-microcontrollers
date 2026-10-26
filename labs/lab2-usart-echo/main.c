@@ -1,0 +1,127 @@
+
+#include "main.h"
+#include "stm32l476xx.h"
+
+extern uint32_t systemTimeCounter;
+
+void delayMs(uint32_t delay)
+{
+	uint32_t curr = systemTimeCounter;
+	while(systemTimeCounter - curr < delay)
+	{	}
+}
+
+
+
+int main(void)
+{
+	// PWR AND SYS ENABLE
+	RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;
+	RCC->APB1ENR1 |= RCC_APB1ENR1_PWREN;
+	RCC->CR |= RCC_CR_MSIRGSEL;
+	SysTick_Config(4000000/1000);
+	NVIC_SetPriority(SysTick_IRQn,0);
+	NVIC_EnableIRQ(SysTick_IRQn);
+	// GPIO_SW
+	RCC->AHB2ENR |= RCC_AHB2ENR_GPIOEEN;
+	GPIOE->MODER &= ~((3 << GPIO_MODER_MODE11_Pos)| (3 <<GPIO_MODER_MODE12_Pos ) | (3 <<GPIO_MODER_MODE10_Pos));
+	GPIOE->OSPEEDR |= ((GPIO_OSPEEDER_OSPEEDR10) | (GPIO_OSPEEDER_OSPEEDR11) | (GPIO_OSPEEDER_OSPEEDR12));
+	//	GPIOE->IDR |= GPIO_IDR_ID15;
+
+	//LED
+	GPIOE->MODER &= ~((3 << GPIO_MODER_MODE13_Pos)| (3 <<GPIO_MODER_MODE14_Pos ) | (3 <<GPIO_MODER_MODE15_Pos));
+	GPIOE->MODER |= ((1 << GPIO_MODER_MODE13_Pos)| (1 <<GPIO_MODER_MODE14_Pos ) | (1 <<GPIO_MODER_MODE15_Pos));
+	GPIOE->OSPEEDR |= ((GPIO_OSPEEDER_OSPEEDR13) | (GPIO_OSPEEDER_OSPEEDR14) | (GPIO_OSPEEDER_OSPEEDR15));
+
+	// USART
+	RCC->AHB2ENR |= RCC_AHB2ENR_GPIOBEN;
+	GPIOB->MODER &= ~((3 << GPIO_MODER_MODE6_Pos)| (3 <<GPIO_MODER_MODE7_Pos ));
+	GPIOB->MODER |= (2 << GPIO_MODER_MODE6_Pos)| (2 <<GPIO_MODER_MODE7_Pos );
+	GPIOB->OSPEEDR |=  ((GPIO_OSPEEDER_OSPEEDR6) | (GPIO_OSPEEDER_OSPEEDR7));
+	GPIOB->AFR[0] |= (7 << GPIO_AFRL_AFSEL6_Pos) | (7 << GPIO_AFRL_AFSEL7_Pos);
+
+	RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
+	RCC->CCIPR &= ~(RCC_CCIPR_USART1SEL);
+
+
+
+	USART1->CR1 &= ~(USART_CR1_M0 | USART_CR1_M1);
+	USART1->CR1 |= USART_CR1_OVER8;
+	USART1->BRR |= 0x42;
+	USART1->CR2 &= ~(USART_CR2_STOP);
+	USART1->CR1 |= USART_CR1_UE;
+	USART1->CR1 |= USART_CR1_TE | USART_CR1_RE;
+/*
+	//ADC
+	RCC->AHB2ENR |= RCC_AHB2ENR_GPIOEN;
+	GPIO->ASCR |= GPIO_ASCR_ASC | GPIO_ASCR_ASC;
+
+	RCC->AHB2ENR |= RCC_AHB2ENR_ADCEN;
+	RCC->CCIPR |= (3 << RCC_CCIPR_ADCSEL_Pos);
+
+	ADC123_COMMON->CCR |= (3 << ADC_CCR_CKMODE_Pos);
+
+	// calibration
+	ADC1->CR &= ~(ADC_CR_DEEPPWD);
+	ADC1->CR |= ADC_CR_ADVREGEN;
+	ADC1->CR &= ~ADC_CR_ADEN;
+	ADC1->CR &= ~ADC_CR_ADCALDIF;
+	ADC1->CR |= ADC_CR_ADCAL;
+	while(!(ADC1->CR & ADC_CR_ADCAL));
+
+	// chanels cfg
+	ADC1->SMPR1 |= (7 << ADC_SMPR1_SMP_Pos) | (3 << ADC_SMPR1_SMP_Pos);
+	ADC1->SQR1 |= (1 << ADC_SQR1_L_Pos) | ( << ADC_SQR1_SQ1_Pos) | ( << ADC_SQR1_SQ1_Pos);
+	ADC1->CFGR &= (3 << ADC_CFGR_RES_Pos);
+	ADC1->CFGR |= ADC_CFGR_CONT;
+
+	ADC1->ISR |= ADC_ISR_ADRDY;
+	ADC1->CR |= ADC_CR_ADEN;
+	while(!(ADC1->ISR & ADC_ISR_ADRDY));
+
+//*/
+
+
+	char str[] = "abcde";
+	for(int i =0; str[i];i++)
+	{
+		while(!(USART1->ISR & USART_ISR_TXE));
+		USART1->TDR = str[i];
+	}
+
+
+
+
+
+   // Led
+
+	GPIOE->ODR |= GPIO_ODR_OD13;
+	GPIOE->ODR |= GPIO_ODR_OD14;
+	GPIOE->ODR |= GPIO_ODR_OD15;
+
+uint8_t mode = 0;
+
+  while (1)
+  {
+//	  ADC1->CR |= ADC_CR_ADSTART;
+//	  while(!(ADC1->ISR & ADC_ISR_EOC));
+//	  uint16_t d1 = ADC1->DR;
+//	  ADC1->ISR |= ADC_ISR_EOC;
+//	  while(!(ADC1->ISR & ADC_ISR_EOC));
+//	  uint16_t d2 = ADC1->DR;
+//	  ADC1->ISR |= ADC_ISR_EOC;
+	  if(!(GPIOE->IDR & GPIO_IDR_ID12))
+	  {
+		  mode = 1;
+		  GPIOE->ODR &= ~GPIO_ODR_OD13;
+		  GPIOE->ODR &= ~GPIO_ODR_OD14;
+		  GPIOE->ODR &= GPIO_ODR_OD15;
+
+	  }
+	  delayMs(1000);
+	  GPIOB->ODR ^= GPIO_ODR_OD2;
+
+  }
+
+}
+
